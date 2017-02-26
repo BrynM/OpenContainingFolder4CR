@@ -2,7 +2,7 @@
 *.sublime-workspace
 *.crplugin
 ocf4crLayouts/.vs
-ocf4crLayouts/obj
-ocf4crLayouts/bin
-ocf4crLayouts/obj/*
-ocf4crLayouts/bin/*
+ocf4crLayouts/ocf4crLayouts/obj
+ocf4crLayouts/ocf4crLayouts/bin
+ocf4crLayouts/ocf4crLayouts/obj/*
+ocf4crLayouts/ocf4crLayouts/bin/*
