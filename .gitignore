@@ -1,0 +1,6 @@
+*.sublime-project
+*.sublime-workspace
+*.crplugin
+ocf4crLayouts/.vs
+ocf4crLayouts/obj
+ocf4crLayouts/bin
