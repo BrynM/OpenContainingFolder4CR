@@ -45,6 +45,7 @@ class OCF4CR:
 	rgxAllWhitespaceOrEmpty = re.compile("^\s*$")
 	rgxAllWhitespaceOrEmptyOrComment = re.compile("(^\s*$|^\#|^\s*\#)")
 	rgxBooleanFalse = re.compile("^(\s*)?[Ff]alse(\s+.*)?")
+	rgxTrimString = re.compile("(^[\s\"']+|[\s\"']+$)")
 	rgxMatchASetting = re.compile("^(\s*)?([^=\s]+)(\s*)?=(\s*)?(.*)(\s*)?$")
 	rootScriptDirectory = FileInfo(__file__).DirectoryName
 	rootDirectory = FileInfo(FileInfo(FileInfo(__file__).Directory.ToString()).Directory.ToString()).Directory
@@ -59,15 +60,28 @@ class OCF4CR:
 		self.windowIconPath = Path.Combine(self.rootScriptDirectory, "ocf4cr.ico")
 		self.windowIconResource = Icon(self.windowIconPath)
 		self.settings = Ocf4crSettings(self)
-		#self.settings.loadSettingsFromFile()
 
-	def buildExplorerArgs(self, path):
-		if self.settings.get("explorerSeparateProcess"):
-			separateString = self.env["explorer"]["separateArg"];
+	def buildOpenerCommand(self):
+		if self.settings.get("enableCustomCommand"):
+			return self.settings.get("customExec")
+
+		return self.env["explorer"]["path"];
+
+	def buildSingleCommandArgs(self, path):
+		separateString = "";
+		args = ""
+
+		if self.settings.get("enableCustomCommand"):
+			args = self.settings.get("customArgs")
+			if args.find("@path") < 0:
+				# always at least provide the path
+				args += " @path@"
 		else:
-			separateString = "";
+			args = self.env['explorer']['args']
+			if self.settings.get("explorerSeparateProcess"):
+				separateString = self.env["explorer"]["separateArg"];
 
-		return str(self.env['explorer']['args']).replace('@path@', path).replace('@separate@', separateString)
+		return str(args).replace('@path@', path).replace('@separate@', separateString)
 
 	def dbg(self, msg):
 		if self.debug:
@@ -101,6 +115,9 @@ class OCF4CR:
 
 		self.dirCount = len(self.dirList)
 
+		if self.openCustomCommandWithList(self.dirList):
+			return;
+
 		if self.dirCount > 1 and not self.settings.get("onlyUseFirstDir"):
 			if self.settings.get("ignoreMultiSelected"):
 				self.dbg("Ignored multiple selection according to settings")
@@ -111,7 +128,7 @@ class OCF4CR:
 			return
 
 		self.log("Opening single directory \""+self.dirList[0]+"\"")
-		self.openDirWithCommand(self.dirList[0])
+		self.openDirWithCommand(self.dirList[0], False)
 
 	def handleOcf4crSettingsMenuClicked(self):
 		self.log("Triggered ocf4crSettings")
@@ -120,16 +137,54 @@ class OCF4CR:
 	def log(self, msg):
 		print "["+self.logPrefix+" "+datetime.now().strftime(self.logDateFormat)+"] "+msg
 
-	def openDirWithCommand(self, dirPath):
-		parsedArgs = self.buildExplorerArgs(dirPath)
+	def openDirWithCommand(self, dirPath, noWarnings):
+		if self.openCustomCommandWithList(self.dirList):
+			return;
+
+		parsedCommand = self.buildOpenerCommand()
+		parsedArgs = self.buildSingleCommandArgs(dirPath)
 		try:
-			self.dbg("Opening \""+dirPath+"\" with ")
-			Process.Start(self.env['explorer']['path'], parsedArgs)
+			self.dbg("Running \""+parsedCommand+"\" "+parsedArgs)
+			Process.Start(parsedCommand, parsedArgs)
 		except:
 			errType, errValue, errTrace = sys.exc_info()
-			MessageBox.Show(lang.enUs("failedCommand")+"\n\n"+self.env['explorer']['path']+" "+parsedArgs+"\n\n"+str(errValue), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
+			MessageBox.Show(lang.enUs("failedCommand")+"\n\n"+parsedCommand+" "+parsedArgs+"\n\n"+str(errValue), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
 
-	def openMultipleDirsInExplorer(self, dirList):
+	def openCustomCommandWithList(self, dirList):
+		if not self.settings.get("enableCustomCommand") or self.settings.get("customArgs") == "":
+			self.dbg("Custom commands are disabled or custom args are empty. Skipping trying to open with @list@. "+self.settings.get("customArgs"))
+			return False
+
+		if not System.IO.File.Exists(self.settings.get("customExec")):
+			MessageBox.Show(lang.enUs("customCommandNotFound")+"\n\n\""+self.settings.get("customExec")+"\"", lang.enUs("windowTitle")+" "+lang.enUs("error"), MessageBoxButtons.OK, MessageBoxIcon.Error)
+			# We want to halt, so we pretend we did something.
+			return True
+
+		if self.settings.get("customArgs").find("@list@") > -1:
+			parsedCommand = self.buildOpenerCommand()
+			listLen = len(dirList)
+			maxWin = self.settings.get("maxWindows")
+
+			if maxWin > 0 and listLen > maxWin:
+				self.dbg("Using "+str(maxWin)+" of "+str(listLen)+" directories for a single command")
+				dirPile = '"'+'" "'.join(dirList[0:maxWin])+'"'
+			else:
+				self.dbg("Using "+str(listLen)+" directories for a single command")
+				dirPile = '"'+'" "'.join(dirList)+'"'
+
+			parsedArgs = self.settings.get("customArgs").replace("@list@", dirPile)
+
+			try:
+				self.dbg("Running \""+parsedCommand+"\" "+parsedArgs)
+				Process.Start(parsedCommand, parsedArgs)
+			except:
+				errType, errValue, errTrace = sys.exc_info()
+				MessageBox.Show(lang.enUs("failedCommand")+"\n\n"+parsedCommand+" "+parsedArgs+"\n\n"+str(errValue), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
+			return True
+
+		return False
+
+	def openMultipleDirsWithCommand(self, dirList):
 		if not isinstance(dirList, list):
 			MessageBox.Show(lang.enUs("invalidList")+str(type(dirList)), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
 		else:
@@ -137,7 +192,7 @@ class OCF4CR:
 			maxOpened = self.settings.get("maxWindows")
 			for dirName in dirList:
 				sleep(self.runCommandDelay)
-				self.openDirWithCommand(dirName)
+				self.openDirWithCommand(dirName, True)
 				opened += 1
 				if maxOpened > 0 and opened >= maxOpened:
 					self.dbg("Opened "+str(opened)+" windows of max "+str(maxOpened))
@@ -164,5 +219,4 @@ class OCF4CR:
 		print "[WARNING "+self.logPrefix+" "+datetime.now().strftime(self.logDateFormat)+"] "+msg
 
 ocf4cr = OCF4CR()
-
 

@@ -39,6 +39,11 @@ class SettingsForm(Form):
 		self.InitializeComponent()
 		self.handleEnableCustomCommandCheckboxCheckChanged(None, None)
 
+	def langDefault(self, setting):
+		if not setting in self.settings.defaultValues:
+			return ""
+		return " ("+lang.enUs("defaultPlug").replace('@value@', str(self.settings.defaultValues[setting]))+")"
+
 	def checkSettings(self):
 		pendingAreActive = self.settings.givenAreActive(self.pendingSettings)
 		pendingAreDefaults = self.settings.givenAreDefaults(self.pendingSettings)
@@ -199,7 +204,7 @@ class SettingsForm(Form):
 		self.maxWinNumericLabel.Name = "maxWinNumericLabel"
 		self.maxWinNumericLabel.Size = System.Drawing.Size(253, 13)
 		self.maxWinNumericLabel.TabIndex = 2
-		self.maxWinNumericLabel.Text = lang.enUs("maxWinNumericLabel")
+		self.maxWinNumericLabel.Text = lang.enUs("maxWinNumericLabel")+self.langDefault("maxWindows")
 		#
 		# multipleGroupBox
 		#
@@ -226,6 +231,8 @@ class SettingsForm(Form):
 		self.ignoreMultipleRadioButton.Size = System.Drawing.Size(268, 17)
 		self.ignoreMultipleRadioButton.TabIndex = 4
 		self.ignoreMultipleRadioButton.Text = lang.enUs("ignoreMultiple")
+		if self.settings.defaultValues["ignoreMultiSelected"]:
+			self.ignoreMultipleRadioButton.Text += " ("+lang.enUs("default")+")"
 		self.ignoreMultipleRadioButton.UseVisualStyleBackColor = True
 		self.ignoreMultipleRadioButton.CheckedChanged += System.EventHandler(self.handleIgnoreMultipleRadioButtonCheckedChanged)
 		#
@@ -240,6 +247,8 @@ class SettingsForm(Form):
 		self.enableMultipleWindowsRadioButton.Size = System.Drawing.Size(320, 17)
 		self.enableMultipleWindowsRadioButton.TabIndex = 5
 		self.enableMultipleWindowsRadioButton.Text = lang.enUs("enableMultipleWindows")
+		if self.settings.defaultValues["enableMultiWinForMultiSelected"]:
+			self.enableMultipleWindowsRadioButton.Text += " ("+lang.enUs("default")+")"
 		self.enableMultipleWindowsRadioButton.UseVisualStyleBackColor = True
 		self.enableMultipleWindowsRadioButton.CheckedChanged += System.EventHandler(self.handleEnableMultipleWindowsRadioButtonCheckedChanged)
 		#
@@ -254,6 +263,9 @@ class SettingsForm(Form):
 		self.enableOnlyFirstBookRadioButton.Size = System.Drawing.Size(314, 17)
 		self.enableOnlyFirstBookRadioButton.TabIndex = 6
 		self.enableOnlyFirstBookRadioButton.Text = lang.enUs("enableOnlyFirstBook")
+		if self.settings.defaultValues["onlyUseFirstDir"]:
+			self.enableOnlyFirstBookRadioButton.Text += " ("+lang.enUs("default")+")"
+		self.ignoreMultipleRadioButton.UseVisualStyleBackColor = True
 		self.enableOnlyFirstBookRadioButton.UseVisualStyleBackColor = True
 		self.enableOnlyFirstBookRadioButton.CheckedChanged += System.EventHandler(self.handleEnableOnlyFirstBookRadioButtonCheckedChanged)
 		#
@@ -279,6 +291,10 @@ class SettingsForm(Form):
 		self.explorerSeparateCheckbox.Size = System.Drawing.Size(362, 17)
 		self.explorerSeparateCheckbox.TabIndex = 8
 		self.explorerSeparateCheckbox.Text = lang.enUs("explorerExeSeparate")
+		if self.settings.defaultValues["explorerSeparateProcess"]:
+			self.explorerSeparateCheckbox.Text += " ("+lang.enUs("defaultChecked")+")"
+		else:
+			self.explorerSeparateCheckbox.Text += " ("+lang.enUs("defaultUnchecked")+")"
 		self.explorerSeparateCheckbox.UseVisualStyleBackColor = True
 		self.explorerSeparateCheckbox.CheckedChanged += System.EventHandler(self.handleExplorerSeparateCheckboxCheckedChanged)
 		#
@@ -324,6 +340,10 @@ class SettingsForm(Form):
 		self.enableCustomCommandCheckbox.Size = System.Drawing.Size(147, 17)
 		self.enableCustomCommandCheckbox.TabIndex = 12
 		self.enableCustomCommandCheckbox.Text = lang.enUs("enableCustomCommand")
+		if self.settings.defaultValues["enableCustomCommand"]:
+			self.enableCustomCommandCheckbox.Text += " ("+lang.enUs("defaultChecked")+")"
+		else:
+			self.enableCustomCommandCheckbox.Text += " ("+lang.enUs("defaultUnchecked")+")"
 		self.enableCustomCommandCheckbox.UseVisualStyleBackColor = True
 		self.enableCustomCommandCheckbox.CheckedChanged += System.EventHandler(self.handleEnableCustomCommandCheckboxCheckChanged)
 		#
@@ -362,6 +382,7 @@ class SettingsForm(Form):
 		self.commandExecutableTextbox.Size = System.Drawing.Size(445, 20)
 		self.commandExecutableTextbox.TabIndex = 15
 		self.commandExecutableTextbox.TextChanged += System.EventHandler(self.handleCommandExecutableTextboxTextChanged)
+		self.commandExecutableTextbox.Text = str(self.settings.get("customExec"))
 		#
 		# openCommandExecDialog
 		#
@@ -401,6 +422,7 @@ class SettingsForm(Form):
 		self.commandArgumentsTextbox.Size = System.Drawing.Size(526, 20)
 		self.commandArgumentsTextbox.TabIndex = 18
 		self.commandArgumentsTextbox.TextChanged += System.EventHandler(self.handleCommandArgumentsTextboxTextChanged)
+		self.commandArgumentsTextbox.Text = str(self.settings.get("customArgs"))
 		##
 		## saveButton
 		##

@@ -52,7 +52,7 @@ class MultipleDirsForm(Form):
 
 	def clickOpenButton(self, sender, e):
 		self.ocf4cr.dbg("Opening directories:\n"+"\n".join(list(self.directoryCheckboxes.CheckedItems)))
-		self.ocf4cr.openMultipleDirsInExplorer(list(self.directoryCheckboxes.CheckedItems))
+		self.ocf4cr.openMultipleDirsWithCommand(list(self.directoryCheckboxes.CheckedItems))
 		self.Close()
 
 	def clickOpenSettingsButton(self, sender, e):

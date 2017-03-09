@@ -11,13 +11,12 @@ import re
 
 clr.AddReference("System")
 clr.AddReference("System.Windows.Forms")
-clr.AddReference("System.Drawing")
 clr.AddReference("PresentationFramework")
 clr.AddReference("PresentationCore")
 
-import System.Drawing
-from System.Drawing import *
-from System.Collections import *
+from System.Diagnostics import Process
+import System.Windows.Forms
+from System.Windows.Forms import *
 from System.IO import *
 
 from Ocf4crLang import lang
@@ -156,6 +155,8 @@ class Ocf4crSettings:
 			settingConfig = self.defaultSettings[setting]
 			if settingConfig[1] is bool:
 				self.activeSettings[setting] = self.ocf4cr.rgxBooleanFalse.match(str(value)) is None
+			elif settingConfig[1] is str:
+				self.activeSettings[setting] = re.sub(self.ocf4cr.rgxTrimString, '', settingConfig[1](value))
 			else:
 				self.activeSettings[setting] = settingConfig[1](value)
 
