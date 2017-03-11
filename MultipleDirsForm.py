@@ -32,14 +32,20 @@ class MultipleDirsForm(Form):
 	def __init__(self, ocf4cr, dirList):
 		self._dirList = dirList
 		self._checkList = []
+		self._selectingAll = False
 		self.ocf4cr = ocf4cr
 		self.maxWindows = self.ocf4cr.settings.get("maxWindows")
 		self.InitializeComponent(dirList)
 
-	# -- This crashes ComicRack and does not work --
-	#def directoryCheckboxesItemCheck(self, sender, e):
-	#	if len(self.directoryCheckboxes.CheckedItems) >= self.maxWindows:
-	#		self.directoryCheckboxes.SetItemChecked(e.Index, False)
+	def directoryCheckboxesItemCheck(self, sender, e):
+		if not self._selectingAll:
+			if sender.GetItemCheckState(e.Index):
+				self.selectAllCheckbox.Checked = len(self.directoryCheckboxes.CheckedItems) - 1 == len(self._dirList)
+			else:
+				self.selectAllCheckbox.Checked = len(self.directoryCheckboxes.CheckedItems) + 1 == len(self._dirList)
+		# This will crash ComicRack :/
+		#if len(self.directoryCheckboxes.CheckedItems) >= self.maxWindows:
+		#	self.directoryCheckboxes.SetItemChecked(e.Index, False)
 
 	def freshenmultipleLabelText(self):
 		if self.maxWindows > 0:
@@ -67,10 +73,12 @@ class MultipleDirsForm(Form):
 		self.directoryCheckboxes.Refresh()
 
 		idx = 0
+		self._selectingAll = True
 		while idx < len(self.directoryCheckboxes.Items):
 			self.directoryCheckboxes.SetItemChecked(idx, doAll)
 			self.ocf4cr.dbg("Selecting "+("all" if doAll else "none")+" checked "+self.directoryCheckboxes.GetItemText(idx))
 			idx += 1
+		self._selectingAll = False
 
 	def InitializeComponent(self, dirList):
 		self.labelMessage = System.Windows.Forms.Label()
@@ -117,7 +125,7 @@ class MultipleDirsForm(Form):
 		self.directoryCheckboxes.Size = System.Drawing.Size(703, 237)
 		self.directoryCheckboxes.TabIndex = 1
 		# This crashes ComicRack and does not work
-		#self.directoryCheckboxes.ItemCheck += System.Windows.Forms.ItemCheckEventHandler(self.directoryCheckboxesItemCheck)
+		self.directoryCheckboxes.ItemCheck += System.Windows.Forms.ItemCheckEventHandler(self.directoryCheckboxesItemCheck)
 		for dirName in self._dirList:
 			self.directoryCheckboxes.Items.Add(dirName, False)
 		#
@@ -191,4 +199,3 @@ class MultipleDirsForm(Form):
 		self.CenterToScreen()
 		self.ResumeLayout(False)
 		self.PerformLayout()
-
