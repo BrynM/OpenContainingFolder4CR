@@ -44,6 +44,9 @@ class MultipleDirsForm(Form):
 			else:
 				self.selectAllCheckbox.Checked = len(self.directoryCheckboxes.CheckedItems) + 1 == len(self._dirList)
 		# This will crash ComicRack :/
+		print "e.NewValue.Checked "+str(type(e.NewValue.Checked))
+		#if e.NewValue.Checked:
+
 		#if len(self.directoryCheckboxes.CheckedItems) >= self.maxWindows:
 		#	self.directoryCheckboxes.SetItemChecked(e.Index, False)
 

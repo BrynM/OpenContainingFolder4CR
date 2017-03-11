@@ -46,6 +46,8 @@ class Ocf4crLang:
 				"openSelected": "Open selected directories",
 				"save": "Save",
 				"selectAll": "Select All",
+				"selectAllCount": "(@count@ of max @max@ selected)",
+				"unlimited": "unlimited",
 				"windowTitle": "Open Containing Folder for ComicRack",
 				"windowTitleSettings": "Open Containing Folder for ComicRack Settings",
 			},
