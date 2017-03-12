@@ -27,47 +27,48 @@ from System.Collections import *
 from Ocf4crLang import lang
 
 class MultipleDirsForm(Form):
-	maxOpen = 0
+	_dirList = None
+	_checkList = None
+	_maxString = None
+	_maxWindows = 0
+	ocf4cr = None
 
 	def __init__(self, ocf4cr, dirList):
 		self._dirList = dirList
 		self._checkList = []
+		self._maxString = lang.enUs("unlimited")
 		self._selectingAll = False
 		self.ocf4cr = ocf4cr
-		self.maxWindows = self.ocf4cr.settings.get("maxWindows")
+		self._maxWindows = self.ocf4cr.settings.get("maxWindows")
 		self.InitializeComponent(dirList)
+		self.updateMaxStrings(0)
+
+	def updateMaxStrings(self, checkedCount):
+		if self._maxWindows < 1:
+			self._maxString = lang.enUs("unlimited");
+		else:
+			self._maxString = str(self._maxWindows);
+		self.labelSelectedCounted.Text =lang.enUs("selectAllCount").replace('@count@', str(int(checkedCount))).replace('@max@', self._maxString)
 
 	def directoryCheckboxesItemCheck(self, sender, e):
-		unlimited = self.maxWindows < 1
+		unlimited = self._maxWindows < 1
 		checkedCount = len(self.directoryCheckboxes.CheckedItems)
 		# the checkbox is on its way to changing state, but hasn't yet
 		isGettingChecked = not sender.GetItemCheckState(e.Index)
-		if unlimited:
-			maxString = lang.enUs("unlimited");
-		else:
-			maxString = str(self.maxWindows);
-		if isGettingChecked and checkedCount + 1 >= self.maxWindows:
+		if isGettingChecked and checkedCount + 1 >= self._maxWindows:
 			self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Red")
 		else:
 			self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Black")
 		if isGettingChecked:
 			self.selectAllCheckbox.Checked = checkedCount + 1 == len(self._dirList)
-			if not unlimited and not self._selectingAll and checkedCount >= self.maxWindows:
-				self.ocf4cr.dbg("Preventing check beyond maxWindows ("+str(self.maxWindows)+") for index "+str(e.Index))
+			if not unlimited and not self._selectingAll and checkedCount >= self._maxWindows:
+				self.ocf4cr.dbg("Preventing check beyond maxWindows ("+str(self._maxWindows)+") for index "+str(e.Index))
 				e.NewValue = e.CurrentValue
 				return
-			self.labelSelectedCounted.Text = lang.enUs("selectAllCount").replace('@count@', str(checkedCount+1)).replace('@max@', maxString)
+			self.updateMaxStrings(checkedCount+1)
 		else:
 			self.selectAllCheckbox.Checked = checkedCount - 1 == len(self._dirList)
-			self.labelSelectedCounted.Text =lang.enUs("selectAllCount").replace('@count@', str(checkedCount-1)).replace('@max@', maxString)
-
-	def freshenmultipleLabelText(self):
-		if self.maxWindows > 0:
-			self.selectAllCheckbox.Text = lang.enUs("selectAll")+" "+lang.enUs("selectAllCount").replace('@count@', str(len(self.directoryCheckboxes.CheckedItems))).replace('@max@', str(self.maxWindows))
-			self.labelMessage.Text = lang.enUs("multipleSelected").replace("@maxWindowsNotification@", lang.enUs("maxWindowsNotification").replace("@maxWindows@", str(self.maxWindows)))
-		else:
-			self.selectAllCheckbox.Text = lang.enUs("selectAll")+" "+lang.enUs("selectAllCount").replace('@count@', str(len(self.directoryCheckboxes.CheckedItems))).replace('@max@', lang.enUs("unlimited"))
-			self.labelMessage.Text = lang.enUs("multipleSelected").replace("@maxWindowsNotification@", lang.enUs("maxWindowsUnlimitedNotification"))
+			self.updateMaxStrings(checkedCount-1)
 
 	def clickCloseButton(self, sender, e):
 		self.Close()
@@ -79,8 +80,8 @@ class MultipleDirsForm(Form):
 
 	def clickOpenSettingsButton(self, sender, e):
 		self.ocf4cr.showSettingsForm()
-		self.maxWindows = self.ocf4cr.settings.get("maxWindows")
-		self.freshenmultipleLabelText()
+		self._maxWindows = self.ocf4cr.settings.get("maxWindows")
+		self.updateMaxStrings(len(self.directoryCheckboxes.CheckedItems))
 		if not self.ocf4cr.settings.get("enableMultiWinForMultiSelected"):
 			self.Close()
 
@@ -94,8 +95,8 @@ class MultipleDirsForm(Form):
 			self.directoryCheckboxes.SetItemChecked(idx, doAll)
 			self.ocf4cr.dbg("Selecting "+("all" if doAll else "none")+" checked "+self.directoryCheckboxes.GetItemText(idx))
 			idx += 1
-			if self.maxWindows > 0 and idx >= self.maxWindows:
-				self.ocf4cr.dbg("Hit max number of items that can be selected.")
+			if self._maxWindows > 0 and idx >= self._maxWindows:
+				self.ocf4cr.dbg("Hit max number of items that can be selected with select all.")
 				self.selectAllCheckbox.Checked = False;
 				break
 		self._selectingAll = False
@@ -121,7 +122,7 @@ class MultipleDirsForm(Form):
 		self.labelMessage.Location = System.Drawing.Point(12, 9)
 		self.labelMessage.Name = "labelMessage"
 		self.labelMessage.Size = System.Drawing.Size(700, 32)
-		self.freshenmultipleLabelText()
+		self.labelMessage.Text = lang.enUs("multipleSelected")
 		self.labelMessage.TabStop = False
 		#
 		# selectAllCheckbox
@@ -144,7 +145,7 @@ class MultipleDirsForm(Form):
 		self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Black")
 		self.labelSelectedCounted.Location = System.Drawing.Point(503, 44)
 		self.labelSelectedCounted.Size = System.Drawing.Size(200, 17)
-		self.labelSelectedCounted.Text = lang.enUs("selectAllCount").replace('@count@', "0").replace('@max@', str(self.maxWindows))
+		self.labelSelectedCounted.Text = lang.enUs("selectAllCount").replace('@count@', "0").replace('@max@', str(self._maxWindows))
 		self.labelSelectedCounted.TextAlign = System.Drawing.ContentAlignment.TopRight
 		#
 		# directoryCheckboxes

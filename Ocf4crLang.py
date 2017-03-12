@@ -37,7 +37,7 @@ class Ocf4crLang:
 				"maxWindowsNotification": "Maximum @maxWindows@ windows will open as applied from settings.",
 				"maxWindowsUnlimitedNotification": "No maximum number of windows applied from settings.",
 				"maxWinNumericLabel": "Maximum number of windows to open - 0 is unlimited",
-				"multipleSelected": "Multiple directories found. Please select the ones you which to open. @maxWindowsNotification@",
+				"multipleSelected": "Multiple directories found. Please select the ones you which to open.",
 				"multipleSelections": "Multiple Selections",
 				"multipleWarning": "Warning! This could open many windows at once and may be slow for large numbers of directories. Open multiple at your own risk!",
 				"nobooks": "You don't have any books selected.\n\nPlease select at least one book.",
