@@ -44,30 +44,35 @@ class MultipleDirsForm(Form):
 		self.updateMaxStrings(0)
 
 	def updateMaxStrings(self, checkedCount):
-		if self._maxWindows < 1:
+		unlimited = self._maxWindows < 1
+		if unlimited:
 			self._maxString = lang.enUs("unlimited");
 		else:
 			self._maxString = str(self._maxWindows);
 		self.labelSelectedCounted.Text =lang.enUs("selectAllCount").replace('@count@', str(int(checkedCount))).replace('@max@', self._maxString)
+		self.selectNoneButton.Enabled = checkedCount > 0;
+		self.selectAllButton.Enabled = checkedCount < self._maxWindows and checkedCount < len(self.directoryCheckboxes.Items);
+		if unlimited or self._maxWindows >= len(self.directoryCheckboxes.Items):
+			self.selectAllButton.Text = lang.enUs("selectAll")
+		else:
+			self.selectAllButton.Text = lang.enUs("selectMax")
 
 	def directoryCheckboxesItemCheck(self, sender, e):
 		unlimited = self._maxWindows < 1
 		checkedCount = len(self.directoryCheckboxes.CheckedItems)
 		# the checkbox is on its way to changing state, but hasn't yet
-		isGettingChecked = not sender.GetItemCheckState(e.Index)
+		isGettingChecked = not self.directoryCheckboxes.GetItemCheckState(e.Index)
 		if isGettingChecked and checkedCount + 1 >= self._maxWindows:
 			self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Red")
 		else:
 			self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Black")
 		if isGettingChecked:
-			self.selectAllCheckbox.Checked = checkedCount + 1 == len(self._dirList)
 			if not unlimited and not self._selectingAll and checkedCount >= self._maxWindows:
 				self.ocf4cr.dbg("Preventing check beyond maxWindows ("+str(self._maxWindows)+") for index "+str(e.Index))
 				e.NewValue = e.CurrentValue
 				return
 			self.updateMaxStrings(checkedCount+1)
 		else:
-			self.selectAllCheckbox.Checked = checkedCount - 1 == len(self._dirList)
 			self.updateMaxStrings(checkedCount-1)
 
 	def clickCloseButton(self, sender, e):
@@ -85,27 +90,33 @@ class MultipleDirsForm(Form):
 		if not self.ocf4cr.settings.get("enableMultiWinForMultiSelected"):
 			self.Close()
 
-	def clickSelectAll(self, sender, e):
-		doAll = self.selectAllCheckbox.Checked
-		self.directoryCheckboxes.Refresh()
-
+	def setAllTimesChecked(self, setToChecked):
 		idx = 0
 		self._selectingAll = True
 		while idx < len(self.directoryCheckboxes.Items):
-			self.directoryCheckboxes.SetItemChecked(idx, doAll)
-			self.ocf4cr.dbg("Selecting "+("all" if doAll else "none")+" checked "+self.directoryCheckboxes.GetItemText(idx))
+			if bool(self.directoryCheckboxes.GetItemCheckState(idx)) != bool(setToChecked):
+				self.directoryCheckboxes.SetItemChecked(idx, setToChecked)
+				self.ocf4cr.dbg("Setting checked index "+self.directoryCheckboxes.GetItemText(idx)+" to "+str(setToChecked))
 			idx += 1
-			if self._maxWindows > 0 and idx >= self._maxWindows:
+			if setToChecked and self._maxWindows > 0 and idx >= self._maxWindows:
 				self.ocf4cr.dbg("Hit max number of items that can be selected with select all.")
-				self.selectAllCheckbox.Checked = False;
 				break
 		self._selectingAll = False
+
+	def clickSelectAllButton(self, sender, e):
+		self.setAllTimesChecked(True)
+		self.updateMaxStrings(len(self.directoryCheckboxes.CheckedItems))
+
+	def clickSelectNoneButton(self, sender, e):
+		self.setAllTimesChecked(False)
+		self.updateMaxStrings(len(self.directoryCheckboxes.CheckedItems))
 
 	def InitializeComponent(self, dirList):
 		self.labelSelectedCounted = System.Windows.Forms.Label()
 		self.labelMessage = System.Windows.Forms.Label()
 		self.labelMultipleWarning = System.Windows.Forms.Label()
-		self.selectAllCheckbox = System.Windows.Forms.CheckBox()
+		self.selectAllButton = System.Windows.Forms.Button()
+		self.selectNoneButton = System.Windows.Forms.Button()
 		self.directoryCheckboxes = System.Windows.Forms.CheckedListBox()
 		self.openButton = System.Windows.Forms.Button()
 		self.openSettingsButton = System.Windows.Forms.Button()
@@ -124,29 +135,37 @@ class MultipleDirsForm(Form):
 		self.labelMessage.Size = System.Drawing.Size(700, 32)
 		self.labelMessage.Text = lang.enUs("multipleSelected")
 		self.labelMessage.TabStop = False
+
 		#
-		# selectAllCheckbox
+		# selectAllButton
 		#
-		self.selectAllCheckbox.AutoSize = True
-		self.selectAllCheckbox.Font = System.Drawing.Font("Microsoft Sans Serif", 8.25, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point)
-		self.selectAllCheckbox.Location = System.Drawing.Point(12, 44)
-		self.selectAllCheckbox.Name = "selectAllCheckbox"
-		self.selectAllCheckbox.Size = System.Drawing.Size(200, 17)
-		self.selectAllCheckbox.TabIndex = 0
-		self.selectAllCheckbox.Text = lang.enUs("selectAll")
-		self.selectAllCheckbox.UseVisualStyleBackColor = True
-		self.selectAllCheckbox.Click += System.EventHandler(self.clickSelectAll)
+		self.selectAllButton.Location = System.Drawing.Point(12, 40)
+		self.selectAllButton.Name = "selectAllButton"
+		self.selectAllButton.Size = System.Drawing.Size(200, 23)
+		self.selectAllButton.Text = lang.enUs("selectMax")
+		self.selectAllButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left
+		self.selectAllButton.Click += System.EventHandler(self.clickSelectAllButton)
+		#
+		# selectNoneButton
+		#
+		self.selectNoneButton.Location = System.Drawing.Point(515, 40)
+		self.selectNoneButton.Name = "selectNoneButton"
+		self.selectNoneButton.Size = System.Drawing.Size(200, 23)
+		self.selectNoneButton.Text = lang.enUs("selectNone")
+		self.selectNoneButton.Enabled = False
+		self.selectNoneButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right
+		self.selectNoneButton.Click += System.EventHandler(self.clickSelectNoneButton)
 		#
 		# labelSelectedCounted
 		#
 		self.labelSelectedCounted.Name = "labelSelectedCounted"
 		self.labelSelectedCounted.AutoSize = False
-		self.labelSelectedCounted.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right
+		self.labelSelectedCounted.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right
 		self.labelSelectedCounted.ForeColor = System.Drawing.Color.FromName("Black")
-		self.labelSelectedCounted.Location = System.Drawing.Point(503, 44)
-		self.labelSelectedCounted.Size = System.Drawing.Size(200, 17)
+		self.labelSelectedCounted.Location = System.Drawing.Point(208, 44)
+		self.labelSelectedCounted.Size = System.Drawing.Size(300, 17)
 		self.labelSelectedCounted.Text = lang.enUs("selectAllCount").replace('@count@', "0").replace('@max@', str(self._maxWindows))
-		self.labelSelectedCounted.TextAlign = System.Drawing.ContentAlignment.TopRight
+		self.labelSelectedCounted.TextAlign = System.Drawing.ContentAlignment.TopCenter
 		#
 		# directoryCheckboxes
 		#
@@ -219,7 +238,8 @@ class MultipleDirsForm(Form):
 		self.Controls.Add(self.openButton)
 		self.Controls.Add(self.cancelButton)
 		self.CancelButton = self.cancelButton
-		self.Controls.Add(self.selectAllCheckbox)
+		self.Controls.Add(self.selectNoneButton)
+		self.Controls.Add(self.selectAllButton)
 		self.Controls.Add(self.labelSelectedCounted)
 		self.Name = "Form1"
 		self.Text = lang.enUs("windowTitle")

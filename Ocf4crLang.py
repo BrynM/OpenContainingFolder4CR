@@ -47,6 +47,8 @@ class Ocf4crLang:
 				"save": "Save",
 				"selectAll": "Select All",
 				"selectAllCount": "(@count@ of max @max@ selected)",
+				"selectMax": "Select maximum",
+				"selectNone": "Select none",
 				"unlimited": "unlimited",
 				"windowTitle": "Open Containing Folder for ComicRack",
 				"windowTitleSettings": "Open Containing Folder for ComicRack Settings",
