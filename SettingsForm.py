@@ -100,12 +100,18 @@ class SettingsForm(Form):
 		if self.enableMultipleWindowsRadioButton.Checked != self.pendingSettings["enableMultiWinForMultiSelected"]:
 			self.pendingSettings["enableMultiWinForMultiSelected"] = bool(self.enableMultipleWindowsRadioButton.Checked)
 			self.ocf4cr.dbg("pendingSettings[\"enableMultiWinForMultiSelected\"] set to "+str(self.pendingSettings["enableMultiWinForMultiSelected"]))
+		if self.enableMultipleWindowsRadioButton.Checked:
+			self.pendingSettings["onlyUseFirstDir"] = False
+			self.pendingSettings["ignoreMultiSelected"] = False
 		self.checkSettings()
 
 	def handleEnableOnlyFirstBookRadioButtonCheckedChanged(self, sender, e):
 		if self.enableOnlyFirstBookRadioButton.Checked != self.pendingSettings["onlyUseFirstDir"]:
 			self.pendingSettings["onlyUseFirstDir"] = bool(self.enableOnlyFirstBookRadioButton.Checked)
 			self.ocf4cr.dbg("pendingSettings[\"onlyUseFirstDir\"] set to "+str(self.pendingSettings["onlyUseFirstDir"]))
+		if self.enableOnlyFirstBookRadioButton.Checked:
+			self.pendingSettings["enableMultiWinForMultiSelected"] = False
+			self.pendingSettings["ignoreMultiSelected"] = False
 		self.checkSettings()
 
 	def handleExplorerSeparateCheckboxCheckedChanged(self, sender, e):
@@ -118,6 +124,10 @@ class SettingsForm(Form):
 		if self.ignoreMultipleRadioButton.Checked != self.pendingSettings["ignoreMultiSelected"]:
 			self.pendingSettings["ignoreMultiSelected"] = bool(self.ignoreMultipleRadioButton.Checked)
 			self.ocf4cr.dbg("pendingSettings[\"ignoreMultiSelected\"] set to "+str(self.pendingSettings["ignoreMultiSelected"]))
+		if self.ignoreMultipleRadioButton.Checked:
+			self.pendingSettings["enableMultiWinForMultiSelected"] = False
+			self.pendingSettings["onlyUseFirstDir"] = False
+		self.checkSettings()
 
 	def handleMaxWinNumericValueChanged(self, sender, e):
 		if self.maxWinNumeric.Value != self.pendingSettings["maxWindows"]:

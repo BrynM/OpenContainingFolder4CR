@@ -27,5 +27,8 @@ def ocf4crButton(books):
 def ocf4crSettingsMenu():
 	ocf4cr.dbg("Calling ocf4cr.handleOcf4crSettingsMenuClicked()")
 	ocf4cr.handleOcf4crSettingsMenuClicked()
-	#ocf4crSettings()
+
+
+
+
 
