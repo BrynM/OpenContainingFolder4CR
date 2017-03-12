@@ -40,6 +40,7 @@ class MultipleDirsForm(Form):
 		self._selectingAll = False
 		self.ocf4cr = ocf4cr
 		self._maxWindows = self.ocf4cr.settings.get("maxWindows")
+		self.ocf4cr.settings.loadSettingsFromFile()
 		self.InitializeComponent(dirList)
 		self.updateMaxStrings(0)
 

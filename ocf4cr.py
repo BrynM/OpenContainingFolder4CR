@@ -102,7 +102,6 @@ class OCF4CR:
 
 	def handleOcf4crButtonClicked(self, books):
 		self.log("Triggered main icon handler")
-
 		if not books:
 			MessageBox.Show(lang.enUs("nobooks"), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Information)
 			return
@@ -113,6 +112,7 @@ class OCF4CR:
 			MessageBox.Show(lang.enUs("nodirs"), lang.enUs("windowTitle"), MessageBoxButtons.OK, MessageBoxIcon.Information)
 			return
 
+		self.settings.loadSettingsFromFile()
 		self.dirCount = len(self.dirList)
 
 		if self.openCustomCommandWithList(self.dirList):
@@ -208,12 +208,9 @@ class OCF4CR:
 
 	def showSettingsForm(self):
 		theForm = SettingsForm(self, self.settings)
-		result = theForm.ShowDialog()
+		theForm.ShowDialog()
+		self.settings.loadSettingsFromFile()
 		theForm.Dispose()
-		if result != DialogResult.Cancel:
-			self.settings.loadSettingsFromFile()
-			return True
-		return False
 
 	def warn(self, msg):
 		print "[WARNING "+self.logPrefix+" "+datetime.now().strftime(self.logDateFormat)+"] "+msg
